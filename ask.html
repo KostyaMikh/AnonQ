@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ask Anonymously — AnonQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="theme-init.js"></script>
+  <script src="themes.js" defer></script>
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
+    <div class="navbar-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign up</a>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-bottom:60px;">
+    <div class="ask-hero" id="profileHero">
+      <div class="empty-state">
+        <div class="icon">⏳</div>
+        <p>Loading…</p>
+      </div>
+    </div>
+    <div class="card" id="askCard" style="max-width:560px;margin:0 auto 40px;">
+      <div
+        style="font-size:.85rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;">
+        Send an anonymous question</div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <textarea id="questionText" placeholder="Ask anything… they won't know it's you 👀"
+          style="min-height:120px;"></textarea>
+      </div>
+      <span class="error-msg" id="err-q" style="margin-bottom:10px;"></span>
+      <button class="btn btn-primary" style="width:100%;" id="sendBtn" onclick="sendQuestion()">Send anonymously
+        🚀</button>
+      <p style="font-size:.78rem;color:var(--text-muted);text-align:center;margin-top:10px;">100% anonymous — no account
+        needed</p>
+    </div>
+    <div class="qa-feed" id="qaFeed"></div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="api.js"></script>
+  <script>
+    let targetUser = null;
+
+    async function init() {
+      const me = API.getUser();
+      if (me) {
+        document.getElementById('navActions').innerHTML =
+          `<a href="dashboard.html" class="btn btn-ghost btn-sm">My Dashboard</a>`;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const username = params.get('u');
+      if (!username) { renderNotFound('No user specified.'); return; }
+
+      try {
+        targetUser = await API.getProfile(username);
+      } catch {
+        renderNotFound('@' + username + ' not found.'); return;
+      }
+
+      const initial = (targetUser.display_name || targetUser.username)[0].toUpperCase();
+      document.getElementById('profileHero').innerHTML = `
+      <div class="avatar">${esc(initial)}</div>
+      <h2>Ask ${esc(targetUser.display_name)}</h2>
+      <p>@${esc(targetUser.username)} · Questions are 100% anonymous</p>`;
+      document.title = 'Ask @' + targetUser.username + ' — AnonQ';
+
+      renderFeed();
+    }
+
+    function renderNotFound(msg) {
+      document.getElementById('profileHero').innerHTML = `
+      <div class="empty-state"><div class="icon">😕</div><p>${esc(msg)}</p>
+      <a href="index.html" class="btn btn-primary" style="margin-top:16px;">Go home</a></div>`;
+      document.getElementById('askCard').style.display = 'none';
+    }
+
+    async function sendQuestion() {
+      const text = document.getElementById('questionText').value.trim();
+      const err = document.getElementById('err-q');
+      err.classList.remove('show'); err.textContent = '';
+
+      if (!text) { err.textContent = 'Please write a question first.'; err.classList.add('show'); return; }
+      if (text.length > 500) { err.textContent = 'Question too long (max 500 chars).'; err.classList.add('show'); return; }
+
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true; btn.textContent = 'Sending…';
+
+      try {
+        await API.ask(targetUser.username, text);
+        document.getElementById('askCard').innerHTML = `
+        <div style="text-align:center;padding:20px 0;">
+          <div style="font-size:3rem;margin-bottom:12px;">🎉</div>
+          <h3 style="margin-bottom:8px;">Question sent!</h3>
+          <p style="color:var(--text-muted);margin-bottom:20px;">Your question was delivered anonymously.</p>
+          <button class="btn btn-primary" onclick="location.reload()">Send another</button>
+        </div>`;
+        renderFeed();
+      } catch (e) {
+        err.textContent = e.message; err.classList.add('show');
+        btn.disabled = false; btn.textContent = 'Send anonymously 🚀';
+      }
+    }
+
+    async function renderFeed() {
+      if (!targetUser) return;
+      try {
+        const questions = await API.listPublicQuestions(targetUser.username);
+        const feed = document.getElementById('qaFeed');
+        if (!questions.length) {
+          feed.innerHTML = `<div class="empty-state"><div class="icon">💬</div><p>No answered questions yet — be the first to ask!</p></div>`;
+          return;
+        }
+        feed.innerHTML = `
+        <div class="section-title" style="margin-bottom:16px;">Answered questions (${questions.length})</div>
+        ${questions.map(q => `
+          <div class="qa-card">
+            <div class="q">${esc(q.text)}</div>
+            <div class="a"><div class="label">Answer</div>${esc(q.answer)}</div>
+            <div class="q-meta">${API.formatDate(q.answered_at)}</div>
+          </div>`).join('')}`;
+      } catch { /* feed stays empty */ }
+    }
+
+    function esc(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    }
+
+    init();
+  </script>
+</body>
+
+</html>

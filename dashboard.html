@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — AnonQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="theme-init.js"></script>
+  <script src="themes.js" defer></script>
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
+    <div class="navbar-actions">
+      <a href="find.html" class="btn btn-ghost btn-sm">Find someone</a>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-bottom:60px;">
+
+    <div class="page-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h1 id="pageTitle">Loading…</h1>
+          <div class="meta" id="pageMeta"></div>
+        </div>
+        <a id="viewPublicBtn" href="#" class="btn btn-ghost btn-sm" target="_blank">View public profile ↗</a>
+      </div>
+    </div>
+
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="num">—</div>
+        <div class="lbl">Total</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">—</div>
+        <div class="lbl">Unanswered</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">—</div>
+        <div class="lbl">Answered</div>
+      </div>
+    </div>
+
+    <div class="share-box" id="shareBox">
+      <div style="font-size:1.3rem;">🔗</div>
+      <div style="flex:1;">
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;font-weight:600;">YOUR SHARE LINK</div>
+        <div class="link-text" id="shareLink" onclick="copyLink()"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="copyLink()">Copy</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('unanswered', this)">Unanswered</button>
+      <button class="tab-btn" onclick="switchTab('answered', this)">Answered</button>
+      <button class="tab-btn" onclick="switchTab('all', this)">All</button>
+    </div>
+
+    <div id="questionsList">
+      <div class="empty-state">
+        <div class="icon">⏳</div>
+        <p>Loading questions…</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+  <script src="api.js"></script>
+  <script>
+    let currentTab = 'unanswered';
+    let currentUser = null;
+    let allQuestions = [];
+
+    async function init() {
+      if (!API.getToken()) { window.location.href = 'login.html'; return; }
+      try {
+        currentUser = await API.me();
+      } catch {
+        API.logout(); window.location.href = 'login.html'; return;
+      }
+
+      document.getElementById('pageTitle').textContent = 'Hey, ' + currentUser.display_name + ' 👋';
+      document.getElementById('pageMeta').textContent = '@' + currentUser.username;
+
+      const link = window.location.origin + '/ask.html?u=' + currentUser.username;
+      document.getElementById('shareLink').textContent = link;
+      document.getElementById('viewPublicBtn').href = link;
+
+      await loadQuestions();
+    }
+
+    async function loadQuestions() {
+      try {
+        allQuestions = await API.listMyQuestions('all');
+        renderStats();
+        renderQuestions();
+      } catch (e) {
+        showToast('Failed to load questions: ' + e.message);
+      }
+    }
+
+    function renderStats() {
+      const answered = allQuestions.filter(q => q.answer).length;
+      const unanswered = allQuestions.filter(q => !q.answer).length;
+      document.getElementById('statsRow').innerHTML = `
+      <div class="stat-card"><div class="num">${allQuestions.length}</div><div class="lbl">Total</div></div>
+      <div class="stat-card"><div class="num">${unanswered}</div><div class="lbl">Unanswered</div></div>
+      <div class="stat-card"><div class="num">${answered}</div><div class="lbl">Answered</div></div>`;
+    }
+
+    function renderQuestions() {
+      let filtered = allQuestions;
+      if (currentTab === 'unanswered') filtered = allQuestions.filter(q => !q.answer);
+      if (currentTab === 'answered') filtered = allQuestions.filter(q => q.answer);
+
+      const container = document.getElementById('questionsList');
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state">
+        <div class="icon">${currentTab === 'unanswered' ? '🎉' : '📭'}</div>
+        <p>${currentTab === 'unanswered' ? "No unanswered questions — you're all caught up!" : 'Nothing here yet.'}</p>
+      </div>`;
+        return;
+      }
+      container.innerHTML = filtered.map(buildCard).join('');
+    }
+
+    function buildCard(q) {
+      const answerSection = q.answer
+        ? `<div class="answer-block">
+           <div class="ans-label">Your answer</div>
+           <div>${esc(q.answer)}</div>
+           <div style="font-size:.78rem;color:var(--text-muted);margin-top:8px;">${API.formatDate(q.answered_at)}</div>
+         </div>`
+        : `<div id="form-${q.id}" style="display:none;" class="answer-form">
+           <textarea id="ans-${q.id}" placeholder="Write your answer…"></textarea>
+           <button class="btn btn-primary btn-sm" onclick="submitAnswer('${q.id}')">Post answer</button>
+           <button class="btn btn-ghost btn-sm" onclick="toggleForm('${q.id}',false)" style="margin-left:6px;">Cancel</button>
+         </div>`;
+
+      const actionBtn = q.answer
+        ? `<button class="btn btn-ghost btn-sm" onclick="editAnswer('${q.id}')">Edit answer</button>`
+        : `<button class="btn btn-primary btn-sm" onclick="toggleForm('${q.id}',true)">Answer</button>`;
+
+      return `<div class="question-card" id="card-${q.id}">
+      <div class="q-text">${esc(q.text)}</div>
+      <div class="q-meta">Received ${API.timeAgo(q.created_at)}</div>
+      ${answerSection}
+      <div class="card-actions">
+        ${actionBtn}
+        <button class="btn btn-danger btn-sm" onclick="deleteQ('${q.id}')">Delete</button>
+      </div>
+    </div>`;
+    }
+
+    function toggleForm(id, show) {
+      const f = document.getElementById('form-' + id);
+      if (f) f.style.display = show ? 'block' : 'none';
+    }
+
+    async function submitAnswer(id) {
+      const ta = document.getElementById('ans-' + id);
+      const answer = ta ? ta.value.trim() : '';
+      if (!answer) { showToast('Please write an answer first.'); return; }
+      try {
+        const q = await API.answer(id, answer);
+        const idx = allQuestions.findIndex(x => x.id === id);
+        if (idx !== -1) allQuestions[idx] = q;
+        renderStats(); renderQuestions();
+        showToast('Answer posted! ✓');
+      } catch (e) { showToast('Error: ' + e.message); }
+    }
+
+    async function editAnswer(id) {
+      try {
+        const q = await API.answer(id, null);
+        const idx = allQuestions.findIndex(x => x.id === id);
+        if (idx !== -1) allQuestions[idx] = q;
+        renderQuestions();
+        setTimeout(() => toggleForm(id, true), 50);
+      } catch (e) { showToast('Error: ' + e.message); }
+    }
+
+    async function deleteQ(id) {
+      if (!confirm('Delete this question?')) return;
+      try {
+        await API.deleteQuestion(id);
+        allQuestions = allQuestions.filter(q => q.id !== id);
+        renderStats(); renderQuestions();
+        showToast('Question deleted.');
+      } catch (e) { showToast('Error: ' + e.message); }
+    }
+
+    function switchTab(tab, btn) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderQuestions();
+    }
+
+    function copyLink() {
+      const link = document.getElementById('shareLink').textContent;
+      navigator.clipboard.writeText(link).then(() => showToast('Link copied! 🔗'));
+    }
+
+    function logout() { API.logout(); window.location.href = 'index.html'; }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    function esc(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    }
+
+    init();
+  </script>
+</body>
+
+</html>

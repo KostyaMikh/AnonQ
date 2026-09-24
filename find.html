@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find Someone — AnonQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="theme-init.js"></script>
+  <script src="themes.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
+    <div class="navbar-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign up</a>
+    </div>
+  </nav>
+
+  <div class="find-page">
+    <div class="container">
+
+      <div style="text-align:center;margin-bottom:36px;">
+        <h1 style="font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:10px;">Find someone to ask</h1>
+        <p style="color:var(--text-muted);">Look up a registered user — or send an anonymous question directly to any
+          email address.</p>
+      </div>
+
+      <div class="card" style="max-width:540px;margin:0 auto;">
+        <div class="tabs" style="margin-bottom:22px;flex-wrap:wrap;">
+          <button class="tab-btn active" onclick="switchMode('username',this)">Username</button>
+          <button class="tab-btn" onclick="switchMode('phone',this)">Phone</button>
+          <button class="tab-btn" onclick="switchMode('telegram',this)">Telegram</button>
+          <button class="tab-btn" onclick="switchMode('email',this)">✉️ By Email</button>
+        </div>
+
+        <!-- Username -->
+        <div id="mode-username">
+          <div class="form-group">
+            <label>AnonQ Username</label>
+            <input type="text" id="inp-username" placeholder="e.g. alex99" autocomplete="off" />
+          </div>
+          <button class="btn btn-primary" style="width:100%;" onclick="search('username')">Find &amp; Ask</button>
+        </div>
+
+        <!-- Phone -->
+        <div id="mode-phone" style="display:none;">
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="inp-phone" placeholder="+1 555 000 0000" autocomplete="off" />
+          </div>
+          <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px;">Only finds users who added their phone
+            number to their profile.</p>
+          <button class="btn btn-primary" style="width:100%;" onclick="search('phone')">Find &amp; Ask</button>
+        </div>
+
+        <!-- Telegram -->
+        <div id="mode-telegram" style="display:none;">
+          <div class="form-group">
+            <label>Telegram Username</label>
+            <input type="text" id="inp-telegram" placeholder="@username or username" autocomplete="off" />
+          </div>
+          <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px;">Only finds users who added their
+            Telegram to their profile.</p>
+          <button class="btn btn-primary" style="width:100%;" onclick="search('telegram')">Find &amp; Ask</button>
+        </div>
+
+        <!-- Email (non-registered) -->
+        <div id="mode-email" style="display:none;">
+          <div
+            style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px;font-size:.86rem;color:var(--text-muted);line-height:1.6;">
+            <strong style="color:var(--text);">📨 Send to anyone, even without an account</strong><br>
+            They'll get an email saying someone sent them an anonymous question.
+          </div>
+          <div class="form-group">
+            <label>Their Email Address</label>
+            <input type="email" id="inp-email" placeholder="friend@example.com" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label>Your anonymous question</label>
+            <textarea id="inp-email-question" placeholder="Ask them anything… they won't know it's you 👀"
+              style="min-height:110px;"></textarea>
+          </div>
+          <span class="error-msg" id="err-email" style="margin-bottom:12px;"></span>
+          <span class="success-msg" id="ok-email" style="margin-bottom:12px;"></span>
+          <button class="btn btn-primary" style="width:100%;" id="sendEmailBtn" onclick="sendToEmail()">Send anonymous
+            question ✉️</button>
+
+          <div id="emailjs-notice"
+            style="margin-top:18px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-size:.83rem;color:var(--text-muted);line-height:1.7;">
+            <strong style="color:var(--accent2);">⚙️ One-time setup required</strong><br>
+            Uses <a href="https://emailjs.com" target="_blank" style="color:var(--accent2);">EmailJS</a> (free, no
+            server).<br><br>
+            <strong style="color:var(--text);">Steps:</strong><br>
+            1. Sign up at <a href="https://emailjs.com" target="_blank"
+              style="color:var(--accent2);">emailjs.com</a><br>
+            2. Add an Email Service (Gmail, Outlook…)<br>
+            3. Create a Template with <code
+              style="background:var(--surface);padding:1px 5px;border-radius:4px;">{{question}}</code> and <code
+              style="background:var(--surface);padding:1px 5px;border-radius:4px;">{{to_email}}</code><br>
+            4. Paste your credentials below:<br><br>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+              <input type="text" id="cfg-pubkey" placeholder="Public Key" style="font-size:.82rem;" />
+              <input type="text" id="cfg-serviceid" placeholder="Service ID" style="font-size:.82rem;" />
+              <input type="text" id="cfg-templateid" placeholder="Template ID" style="font-size:.82rem;" />
+              <button class="btn btn-primary btn-sm" onclick="saveEmailJSConfig()" style="align-self:flex-start;">Save
+                &amp; activate</button>
+              <span class="success-msg" id="cfg-saved">✓ Saved!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lookup result -->
+        <div id="searchResult" style="margin-top:6px;"></div>
+        <span class="error-msg" id="err-search" style="margin-top:12px;"></span>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="api.js"></script>
+  <script>
+    // ── EmailJS ────────────────────────────────────────────────
+    const EJSKEY = 'aq_emailjs';
+    function getEJSConfig() { try { return JSON.parse(localStorage.getItem(EJSKEY)) || {}; } catch { return {}; } }
+
+    function saveEmailJSConfig() {
+      const pubkey = document.getElementById('cfg-pubkey').value.trim();
+      const serviceId = document.getElementById('cfg-serviceid').value.trim();
+      const templateId = document.getElementById('cfg-templateid').value.trim();
+      if (!pubkey || !serviceId || !templateId) { showToast('Fill in all three fields.'); return; }
+      localStorage.setItem(EJSKEY, JSON.stringify({ pubkey, serviceId, templateId }));
+      emailjs.init(pubkey);
+      document.getElementById('cfg-saved').classList.add('show');
+      setTimeout(() => document.getElementById('cfg-saved').classList.remove('show'), 3000);
+    }
+
+    (function () {
+      const cfg = getEJSConfig();
+      if (cfg.pubkey) { emailjs.init(cfg.pubkey); document.getElementById('emailjs-notice').style.display = 'none'; }
+      if (cfg.pubkey) document.getElementById('cfg-pubkey').value = cfg.pubkey;
+      if (cfg.serviceId) document.getElementById('cfg-serviceid').value = cfg.serviceId;
+      if (cfg.templateId) document.getElementById('cfg-templateid').value = cfg.templateId;
+    })();
+
+    async function sendToEmail() {
+      const errEl = document.getElementById('err-email');
+      const okEl = document.getElementById('ok-email');
+      errEl.classList.remove('show'); okEl.classList.remove('show');
+
+      const toEmail = document.getElementById('inp-email').value.trim();
+      const question = document.getElementById('inp-email-question').value.trim();
+
+      if (!toEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
+        errEl.textContent = 'Please enter a valid email address.'; errEl.classList.add('show'); return;
+      }
+      if (!question) { errEl.textContent = 'Please write a question.'; errEl.classList.add('show'); return; }
+
+      const cfg = getEJSConfig();
+      if (!cfg.pubkey) {
+        errEl.textContent = 'EmailJS is not configured yet — fill in the setup fields below.';
+        errEl.classList.add('show');
+        document.getElementById('emailjs-notice').style.display = 'block'; return;
+      }
+
+      const btn = document.getElementById('sendEmailBtn');
+      btn.disabled = true; btn.textContent = 'Sending…';
+
+      try {
+        await emailjs.send(cfg.serviceId, cfg.templateId, {
+          to_email: toEmail, question,
+          site_url: window.location.origin + '/register.html',
+        });
+        okEl.textContent = '🎉 Anonymous question sent to ' + toEmail + '!';
+        okEl.classList.add('show');
+        document.getElementById('inp-email').value = '';
+        document.getElementById('inp-email-question').value = '';
+      } catch (e) {
+        errEl.textContent = 'Failed: ' + (e?.text || e?.message || 'Check your EmailJS config.');
+        errEl.classList.add('show');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Send anonymous question ✉️';
+      }
+    }
+
+    // ── User lookup ────────────────────────────────────────────
+    let currentMode = 'username';
+
+    function switchMode(mode, btn) {
+      currentMode = mode;
+      ['username', 'phone', 'telegram', 'email'].forEach(m => {
+        document.getElementById('mode-' + m).style.display = m === mode ? 'block' : 'none';
+      });
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('searchResult').innerHTML = '';
+      clearErr();
+    }
+
+    async function search(mode) {
+      clearErr();
+      document.getElementById('searchResult').innerHTML = '';
+
+      let by, value;
+      if (mode === 'username') {
+        value = document.getElementById('inp-username').value.trim().toLowerCase();
+        if (!value) { showErr('Please enter a username.'); return; }
+        by = 'username';
+      } else if (mode === 'phone') {
+        value = document.getElementById('inp-phone').value.trim();
+        if (!value) { showErr('Please enter a phone number.'); return; }
+        by = 'phone';
+      } else if (mode === 'telegram') {
+        value = document.getElementById('inp-telegram').value.trim();
+        if (!value) { showErr('Please enter a Telegram username.'); return; }
+        by = 'telegram';
+      }
+
+      try {
+        const user = await API.findUser(by, value);
+        const initial = (user.display_name || user.username)[0].toUpperCase();
+        document.getElementById('searchResult').innerHTML = `
+        <div class="result-profile">
+          <div class="avatar">${esc(initial)}</div>
+          <div class="info">
+            <div class="name">${esc(user.display_name)}</div>
+            <div class="handle">@${esc(user.username)}</div>
+          </div>
+          <a href="ask.html?u=${encodeURIComponent(user.username)}" class="btn btn-primary btn-sm" style="margin-left:auto;">Ask →</a>
+        </div>`;
+      } catch {
+        document.getElementById('searchResult').innerHTML = `
+        <div style="margin-top:20px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:22px;text-align:center;">
+          <div style="font-size:2.2rem;margin-bottom:10px;">🤷</div>
+          <div style="font-weight:700;font-size:1.05rem;margin-bottom:6px;color:var(--text);">No one found</div>
+          <div style="font-size:.9rem;color:var(--text-muted);margin-bottom:18px;line-height:1.6;">
+            This person hasn't joined AnonQ yet —<br>but you can still reach them by email.
+          </div>
+          <button class="btn btn-primary" onclick="switchToEmail()">✉️ Send by email instead</button>
+        </div>`;
+      }
+    }
+
+    function switchToEmail() {
+      document.querySelectorAll('.tab-btn').forEach(btn => { if (btn.textContent.includes('Email')) btn.click(); });
+      setTimeout(() => {
+        const el = document.getElementById('inp-email');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      }, 80);
+    }
+
+    function showErr(msg) { const e = document.getElementById('err-search'); e.textContent = msg; e.classList.add('show'); }
+    function clearErr() { const e = document.getElementById('err-search'); e.textContent = ''; e.classList.remove('show'); }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+    function esc(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter' && currentMode !== 'email') search(currentMode); });
+
+    const me = API.getUser();
+    if (me) {
+      document.getElementById('navActions').innerHTML = `<a href="dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>`;
+    }
+  </script>
+</body>
+
+</html>

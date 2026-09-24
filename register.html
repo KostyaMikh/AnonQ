@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up — AnonQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="theme-init.js"></script>
+  <script src="themes.js" defer></script>
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
+  </nav>
+
+  <div class="auth-wrap">
+    <div class="card auth-card">
+      <h2>Create your account</h2>
+      <p class="sub">Get your personal anonymous question link.</p>
+
+      <div class="form-group">
+        <label>Username *</label>
+        <input type="text" id="username" placeholder="e.g. alex99" autocomplete="off" />
+        <span class="error-msg" id="err-username"></span>
+      </div>
+      <div class="form-group">
+        <label>Display Name *</label>
+        <input type="text" id="displayName" placeholder="Alex" />
+      </div>
+      <div class="form-group">
+        <label>Password *</label>
+        <input type="password" id="password" placeholder="Min. 6 characters" />
+        <span class="error-msg" id="err-password"></span>
+      </div>
+      <div class="form-group">
+        <label>Phone number <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+        <input type="tel" id="phone" placeholder="+1 555 000 0000" />
+      </div>
+      <div class="form-group">
+        <label>Telegram username <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+        <input type="text" id="telegram" placeholder="@yourusername" />
+      </div>
+
+      <span class="error-msg" id="err-global" style="margin-bottom:14px;"></span>
+
+      <button class="btn btn-primary" style="width:100%;" id="submitBtn" onclick="register()">Create account</button>
+      <p class="auth-switch">Already have an account? <a href="login.html">Log in</a></p>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="api.js"></script>
+  <script>
+    if (API.getToken()) window.location.href = 'dashboard.html';
+
+    function showErr(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.classList.add('show');
+    }
+    function clearErrs() {
+      document.querySelectorAll('.error-msg').forEach(e => { e.classList.remove('show'); e.textContent = ''; });
+    }
+
+    async function register() {
+      clearErrs();
+      const username = document.getElementById('username').value.trim().toLowerCase();
+      const display_name = document.getElementById('displayName').value.trim();
+      const password = document.getElementById('password').value;
+      const phone = document.getElementById('phone').value.trim();
+      const telegram = document.getElementById('telegram').value.trim();
+
+      let valid = true;
+      if (!username || !/^[a-z0-9_]{3,20}$/.test(username)) {
+        showErr('err-username', 'Username must be 3–20 chars: letters, numbers, underscores only.');
+        valid = false;
+      }
+      if (!password || password.length < 6) {
+        showErr('err-password', 'Password must be at least 6 characters.');
+        valid = false;
+      }
+      if (!valid) return;
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.textContent = 'Creating account…';
+
+      try {
+        await API.register({ username, display_name: display_name || username, password, phone, telegram });
+        window.location.href = 'dashboard.html';
+      } catch (e) {
+        showErr('err-global', e.message);
+        document.getElementById('err-global').classList.add('show');
+        btn.disabled = false; btn.textContent = 'Create account';
+      }
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') register(); });
+  </script>
+</body>
+
+</html>

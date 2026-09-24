@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnonQ — Ask Anonymously</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="theme-init.js"></script>
+  <script src="themes.js" defer></script>
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
+    <div class="navbar-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign up</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Get <em>anonymous</em> questions<br>from anyone</h1>
+      <p>Share your link, let people ask you anything — or find someone by phone / Telegram and send them a secret
+        question.</p>
+      <div class="hero-actions">
+        <a href="register.html" class="btn btn-primary">Create your link</a>
+        <a href="find.html" class="btn btn-ghost">Find someone</a>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding: 20px 0 80px;">
+    <div class="container">
+      <div
+        style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:20px; text-align:center;">
+        <div class="card">
+          <div style="font-size:2.2rem;margin-bottom:12px;">🔗</div>
+          <h3 style="margin-bottom:8px;">Share your link</h3>
+          <p style="color:var(--text-muted);font-size:.9rem;">Post it on Instagram, Twitter, or any bio — your followers
+            can ask you anything.</p>
+        </div>
+        <div class="card">
+          <div style="font-size:2.2rem;margin-bottom:12px;">📩</div>
+          <h3 style="margin-bottom:8px;">Receive questions</h3>
+          <p style="color:var(--text-muted);font-size:.9rem;">Questions arrive completely anonymously — no sender info,
+            ever.</p>
+        </div>
+        <div class="card">
+          <div style="font-size:2.2rem;margin-bottom:12px;">💬</div>
+          <h3 style="margin-bottom:8px;">Answer publicly</h3>
+          <p style="color:var(--text-muted);font-size:.9rem;">Reply to questions and your answers show up on your public
+            profile for everyone to read.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast"></div>
+  <script src="api.js"></script>
+  <script>
+    const me = API.getUser();
+    if (me) {
+      document.getElementById('navActions').innerHTML = `
+      <a href="dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>
+      <a href="dashboard.html" class="btn btn-primary btn-sm">@${me.username}</a>`;
+    }
+  </script>
+</body>
+
+</html>
