@@ -553,7 +553,7 @@ const I18N = {
     wrap.id = 'langPicker';
     wrap.innerHTML = `
       <button class="lang-toggle-btn" onclick="I18N._toggleDropdown(event)" aria-label="Language">
-        <span id="langFlag">${LANGS[this.current].flag}</span>
+        <span id="langFlag">${this.current.toUpperCase()}</span>
       </button>
       <div class="lang-dropdown" id="langDropdown">
         ${Object.entries(LANGS).map(([code, lang]) => `
@@ -575,11 +575,13 @@ const I18N = {
         .lang-toggle-btn {
           background: var(--surface2); border: 1px solid var(--border);
           border-radius: var(--radius-sm, 8px); width: 36px; height: 36px;
-          font-size: 1.1rem; cursor: pointer;
+          font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em;
+          color: var(--text-muted); cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          transition: border-color .2s;
+          transition: border-color .2s, color .2s;
+          font-family: inherit;
         }
-        .lang-toggle-btn:hover { border-color: var(--accent2); }
+        .lang-toggle-btn:hover { border-color: var(--accent2); color: var(--text); }
         .lang-dropdown {
           display: none; position: absolute; top: calc(100% + 8px); right: 0;
           background: var(--surface); border: 1px solid var(--border);
@@ -615,7 +617,7 @@ const I18N = {
 
   _updateSwitcher() {
     const flag = document.getElementById('langFlag');
-    if (flag) flag.textContent = LANGS[this.current].flag;
+    if (flag) flag.textContent = this.current.toUpperCase();
     document.querySelectorAll('.lang-option').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.lang === this.current);
     });
