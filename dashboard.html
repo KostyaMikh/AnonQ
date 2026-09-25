@@ -17,13 +17,14 @@
   <nav class="navbar">
     <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
     <div class="navbar-actions">
-      <a href="creators.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">Creators</a>
+      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">🏆 Top</a>
+      <a href="creators.html" class="btn btn-ghost btn-sm">Creators</a>
       <a href="find.html" class="btn btn-ghost btn-sm">Find someone</a>
       <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
     </div>
   </nav>
 
-  <div class="container" style="padding-bottom:60px;">
+  <div class="container" style="padding-bottom:80px;">
 
     <div class="page-header">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
@@ -50,7 +51,7 @@
       </div>
     </div>
 
-    <div class="share-box" id="shareBox">
+    <div class="share-box">
       <div style="font-size:1.3rem;">🔗</div>
       <div style="flex:1;">
         <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;font-weight:600;">YOUR SHARE LINK</div>
@@ -63,12 +64,13 @@
       <button class="tab-btn active" onclick="switchTab('unanswered', this)">Unanswered</button>
       <button class="tab-btn" onclick="switchTab('answered', this)">Answered</button>
       <button class="tab-btn" onclick="switchTab('all', this)">All</button>
+      <button class="tab-btn" onclick="switchTab('blocked', this)">🚫 Blocked</button>
     </div>
 
     <div id="questionsList">
       <div class="empty-state">
         <div class="icon">⏳</div>
-        <p>Loading questions…</p>
+        <p>Loading…</p>
       </div>
     </div>
 
@@ -83,11 +85,8 @@
 
     async function init() {
       if (!API.getToken()) { window.location.href = 'login.html'; return; }
-      try {
-        currentUser = await API.me();
-      } catch {
-        API.logout(); window.location.href = 'login.html'; return;
-      }
+      try { currentUser = await API.me(); }
+      catch { API.logout(); window.location.href = 'login.html'; return; }
 
       document.getElementById('pageTitle').textContent = 'Hey, ' + currentUser.display_name + ' 👋';
       document.getElementById('pageMeta').textContent = '@' + currentUser.username;
@@ -102,11 +101,8 @@
     async function loadQuestions() {
       try {
         allQuestions = await API.listMyQuestions('all');
-        renderStats();
-        renderQuestions();
-      } catch (e) {
-        showToast('Failed to load questions: ' + e.message);
-      }
+        renderStats(); renderQuestions();
+      } catch (e) { showToast('Failed to load: ' + e.message); }
     }
 
     function renderStats() {
@@ -119,12 +115,14 @@
     }
 
     function renderQuestions() {
+      if (currentTab === 'blocked') { renderBlocked(); return; }
+
       let filtered = allQuestions;
       if (currentTab === 'unanswered') filtered = allQuestions.filter(q => !q.answer);
       if (currentTab === 'answered') filtered = allQuestions.filter(q => q.answer);
 
       const container = document.getElementById('questionsList');
-      if (filtered.length === 0) {
+      if (!filtered.length) {
         container.innerHTML = `<div class="empty-state">
         <div class="icon">${currentTab === 'unanswered' ? '🎉' : '📭'}</div>
         <p>${currentTab === 'unanswered' ? "No unanswered questions — you're all caught up!" : 'Nothing here yet.'}</p>
@@ -157,11 +155,72 @@
       ${answerSection}
       <div class="card-actions">
         ${actionBtn}
+        <button class="btn btn-danger btn-sm" onclick="blockSender('${q.id}')">🚫 Block sender</button>
         <button class="btn btn-danger btn-sm" onclick="deleteQ('${q.id}')">Delete</button>
       </div>
     </div>`;
     }
 
+    // ── Blocked IPs tab ────────────────────────────────────────
+    async function renderBlocked() {
+      const container = document.getElementById('questionsList');
+      container.innerHTML = `<div class="empty-state"><div class="icon">⏳</div><p>Loading…</p></div>`;
+      try {
+        const res = await fetch('/api/block/list', { headers: { Authorization: 'Bearer ' + API.getToken() } });
+        const data = await res.json();
+        const list = data.blocked || [];
+
+        if (!list.length) {
+          container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No blocked senders.</p></div>`;
+          return;
+        }
+
+        container.innerHTML = `
+        <div style="margin-bottom:12px;font-size:.85rem;color:var(--text-muted);">
+          Blocked senders can't send you questions. Their IP is blocked.
+        </div>
+        ${list.map(b => `
+          <div class="question-card" style="display:flex;align-items:center;gap:14px;">
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:.95rem;">🚫 Blocked sender</div>
+              <div style="font-size:.8rem;color:var(--text-muted);margin-top:3px;">Blocked ${API.timeAgo(b.created_at)}</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="unblock('${esc(b.ip)}', this)">Unblock</button>
+          </div>`).join('')}`;
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Failed to load.</p></div>`;
+      }
+    }
+
+    async function blockSender(questionId) {
+      if (!confirm('Block this sender? They won\'t be able to send you questions anymore.')) return;
+      try {
+        const res = await fetch('/api/block/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + API.getToken() },
+          body: JSON.stringify({ question_id: questionId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showToast('🚫 Sender blocked.');
+      } catch (e) { showToast('Could not block: ' + e.message); }
+    }
+
+    async function unblock(ip, btn) {
+      btn.disabled = true; btn.textContent = 'Unblocking…';
+      try {
+        const res = await fetch('/api/block/list', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + API.getToken() },
+          body: JSON.stringify({ ip }),
+        });
+        if (!res.ok) throw new Error('Failed');
+        showToast('Sender unblocked.');
+        renderBlocked();
+      } catch (e) { showToast('Could not unblock.'); btn.disabled = false; btn.textContent = 'Unblock'; }
+    }
+
+    // ── Question actions ───────────────────────────────────────
     function toggleForm(id, show) {
       const f = document.getElementById('form-' + id);
       if (f) f.style.display = show ? 'block' : 'none';
@@ -208,8 +267,8 @@
     }
 
     function copyLink() {
-      const link = document.getElementById('shareLink').textContent;
-      navigator.clipboard.writeText(link).then(() => showToast('Link copied! 🔗'));
+      navigator.clipboard.writeText(document.getElementById('shareLink').textContent)
+        .then(() => showToast('Link copied! 🔗'));
     }
 
     function logout() { API.logout(); window.location.href = 'index.html'; }

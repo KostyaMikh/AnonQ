@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaderboard — AnonQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="theme-init.js"></script>
+  <script src="themes.js" defer></script>
+  <style>
+    .lb-hero {
+      text-align: center;
+      padding: 56px 20px 36px;
+    }
+    .lb-hero h1 { font-size: clamp(1.8rem,4vw,2.6rem); margin-bottom: 8px; }
+    .lb-hero p  { color: var(--text-muted); font-size: .97rem; }
+
+    .lb-tabs {
+      display: flex; gap: 8px; justify-content: center;
+      margin-bottom: 32px; flex-wrap: wrap;
+    }
+
+    .lb-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 60px;
+    }
+
+    .lb-row {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row:hover { background: var(--surface2); }
+
+    .lb-rank {
+      font-size: 1.3rem; font-weight: 800;
+      width: 36px; text-align: center; flex-shrink: 0;
+      color: var(--text-muted);
+    }
+    .lb-rank.gold   { color: #f59e0b; }
+    .lb-rank.silver { color: #94a3b8; }
+    .lb-rank.bronze { color: #cd7c50; }
+
+    .lb-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 800; color: #fff;
+      flex-shrink: 0;
+    }
+
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-name {
+      font-weight: 700; font-size: .98rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lb-handle { font-size: .82rem; color: var(--text-muted); }
+
+    .lb-count {
+      font-size: 1.4rem; font-weight: 800;
+      color: var(--accent2); flex-shrink: 0;
+      text-align: right;
+    }
+    .lb-count-label {
+      font-size: .72rem; color: var(--text-muted);
+      text-align: right; margin-top: 1px;
+    }
+
+    .lb-ask-btn {
+      flex-shrink: 0;
+    }
+
+    .lb-empty {
+      text-align: center; padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .lb-empty .icon { font-size: 2.8rem; margin-bottom: 12px; }
+
+    .lb-skeleton .lb-name  { background: var(--surface2); border-radius: 6px; height: 14px; width: 120px; }
+    .lb-skeleton .lb-handle{ background: var(--surface2); border-radius: 6px; height: 11px; width: 70px; margin-top: 6px; }
+    .lb-skeleton .lb-count { background: var(--surface2); border-radius: 6px; height: 22px; width: 36px; }
+    .lb-skeleton .lb-avatar { background: var(--surface2); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
+  <div class="navbar-actions" id="navActions">
+    <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">🏆 Top</a>
+    <a href="creators.html" class="btn btn-ghost btn-sm">Creators</a>
+    <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+    <a href="register.html" class="btn btn-primary btn-sm">Sign up</a>
+  </div>
+</nav>
+
+<div class="container" style="padding-bottom:60px;">
+
+  <div class="lb-hero">
+    <h1>🏆 Leaderboard</h1>
+    <p>Top users by questions received and answered</p>
+  </div>
+
+  <div class="lb-tabs">
+    <button class="tab-btn active" onclick="switchTab('received', this)">📩 Most questions received</button>
+    <button class="tab-btn" onclick="switchTab('answered', this)">💬 Most questions answered</button>
+  </div>
+
+  <div class="lb-table" id="lbTable">
+    <!-- skeleton -->
+    ${[1,2,3,4,5].map(i => `
+    <div class="lb-row lb-skeleton">
+      <div class="lb-rank">${i}</div>
+      <div class="lb-avatar"></div>
+      <div class="lb-info"><div class="lb-name"></div><div class="lb-handle"></div></div>
+      <div><div class="lb-count"></div></div>
+    </div>`).join('')}
+  </div>
+
+</div>
+
+<div id="toast"></div>
+<script src="api.js"></script>
+<script>
+  let currentTab = 'received';
+
+  async function loadBoard(type) {
+    const table = document.getElementById('lbTable');
+    table.innerHTML = [1,2,3,4,5].map(i => `
+      <div class="lb-row lb-skeleton">
+        <div class="lb-rank">${i}</div>
+        <div class="lb-avatar" style="background:var(--surface2);"></div>
+        <div class="lb-info"><div class="lb-name" style="background:var(--surface2);border-radius:6px;height:14px;width:120px;"></div>
+          <div class="lb-handle" style="background:var(--surface2);border-radius:6px;height:11px;width:70px;margin-top:6px;"></div></div>
+        <div style="background:var(--surface2);border-radius:6px;height:22px;width:36px;"></div>
+      </div>`).join('');
+
+    try {
+      const res  = await fetch(`/api/leaderboard?type=${type}&limit=20`);
+      const data = await res.json();
+      const board = data.board || [];
+
+      if (!board.length) {
+        table.innerHTML = `<div class="lb-empty"><div class="icon">📭</div><p>No data yet — be the first to ask someone!</p></div>`;
+        return;
+      }
+
+      const label = type === 'received' ? 'received' : 'answered';
+      const rankIcon = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1;
+      const rankClass = (i) => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+
+      table.innerHTML = board.map((entry, i) => `
+        <div class="lb-row">
+          <div class="lb-rank ${rankClass(i)}">${rankIcon(i)}</div>
+          <div class="lb-avatar">${esc(entry.display_name[0].toUpperCase())}</div>
+          <div class="lb-info">
+            <div class="lb-name">${esc(entry.display_name)}</div>
+            <div class="lb-handle">@${esc(entry.username)}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div class="lb-count">${entry.count}</div>
+            <div class="lb-count-label">${label}</div>
+          </div>
+          <a href="ask.html?u=${encodeURIComponent(entry.username)}" class="btn btn-primary btn-sm lb-ask-btn">Ask</a>
+        </div>`).join('');
+    } catch (e) {
+      table.innerHTML = `<div class="lb-empty"><div class="icon">⚠️</div><p>Failed to load leaderboard.</p></div>`;
+    }
+  }
+
+  function switchTab(type, btn) {
+    currentTab = type;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadBoard(type);
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Update nav if logged in
+  const me = API.getUser();
+  if (me) {
+    document.getElementById('navActions').innerHTML = `
+      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">🏆 Top</a>
+      <a href="creators.html" class="btn btn-ghost btn-sm">Creators</a>
+      <a href="dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>
+      <a href="dashboard.html" class="btn btn-primary btn-sm">@${me.username}</a>`;
+  }
+
+  loadBoard('received');
+</script>
+</body>
+</html>
