@@ -5,12 +5,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leaderboard — AnonQ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <script src="theme-init.js"></script>
   <script src="themes.js" defer></script>
   <script src="i18n.js" defer></script>
+  <script src="navbar.js" defer></script>
   <style>
     .lb-hero {
       text-align: center;
@@ -142,32 +141,6 @@
       font-size: 2.8rem;
       margin-bottom: 12px;
     }
-
-    .lb-skeleton .lb-name {
-      background: var(--surface2);
-      border-radius: 6px;
-      height: 14px;
-      width: 120px;
-    }
-
-    .lb-skeleton .lb-handle {
-      background: var(--surface2);
-      border-radius: 6px;
-      height: 11px;
-      width: 70px;
-      margin-top: 6px;
-    }
-
-    .lb-skeleton .lb-count {
-      background: var(--surface2);
-      border-radius: 6px;
-      height: 22px;
-      width: 36px;
-    }
-
-    .lb-skeleton .lb-avatar {
-      background: var(--surface2);
-    }
   </style>
 </head>
 
@@ -176,40 +149,29 @@
   <nav class="navbar">
     <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
     <div class="navbar-actions" id="navActions">
-      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">🏆 Top</a>
-      <a href="creators.html" class="btn btn-ghost btn-sm">Creators</a>
-      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
-      <a href="register.html" class="btn btn-primary btn-sm">Sign up</a>
+      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);"
+        data-i18n="nav_leaderboard">🏆 Top</a>
+      <a href="creators.html" class="btn btn-ghost btn-sm" data-i18n="nav_creators">Creators</a>
+      <a href="login.html" class="btn btn-ghost btn-sm" data-i18n="nav_login">Log in</a>
+      <a href="register.html" class="btn btn-primary btn-sm" data-i18n="nav_signup">Sign up</a>
     </div>
   </nav>
 
   <div class="container" style="padding-bottom:60px;">
 
     <div class="lb-hero">
-      <h1>🏆 Leaderboard</h1>
-      <p>Top users by questions received and answered</p>
+      <h1 data-i18n="lb_title">🏆 Leaderboard</h1>
+      <p data-i18n="lb_sub">Top users by questions received and answered</p>
     </div>
 
     <div class="lb-tabs">
-      <button class="tab-btn active" onclick="switchTab('received', this)">📩 Most questions received</button>
-      <button class="tab-btn" onclick="switchTab('answered', this)">💬 Most questions answered</button>
+      <button class="tab-btn active" onclick="switchTab('received',this)" data-i18n="lb_received">📩 Most questions
+        received</button>
+      <button class="tab-btn" onclick="switchTab('answered',this)" data-i18n="lb_answered">💬 Most questions
+        answered</button>
     </div>
 
-    <div class="lb-table" id="lbTable">
-      <!-- skeleton -->
-      ${[1,2,3,4,5].map(i => `
-      <div class="lb-row lb-skeleton">
-        <div class="lb-rank">${i}</div>
-        <div class="lb-avatar"></div>
-        <div class="lb-info">
-          <div class="lb-name"></div>
-          <div class="lb-handle"></div>
-        </div>
-        <div>
-          <div class="lb-count"></div>
-        </div>
-      </div>`).join('')}
-    </div>
+    <div class="lb-table" id="lbTable"></div>
 
   </div>
 
@@ -217,15 +179,18 @@
   <script src="api.js"></script>
   <script>
     let currentTab = 'received';
+    function T(k) { return typeof I18N !== 'undefined' ? I18N.t(k) : k; }
 
     async function loadBoard(type) {
       const table = document.getElementById('lbTable');
       table.innerHTML = [1, 2, 3, 4, 5].map(i => `
-      <div class="lb-row lb-skeleton">
+      <div class="lb-row">
         <div class="lb-rank">${i}</div>
         <div class="lb-avatar" style="background:var(--surface2);"></div>
-        <div class="lb-info"><div class="lb-name" style="background:var(--surface2);border-radius:6px;height:14px;width:120px;"></div>
-          <div class="lb-handle" style="background:var(--surface2);border-radius:6px;height:11px;width:70px;margin-top:6px;"></div></div>
+        <div class="lb-info">
+          <div style="background:var(--surface2);border-radius:6px;height:14px;width:120px;"></div>
+          <div style="background:var(--surface2);border-radius:6px;height:11px;width:70px;margin-top:6px;"></div>
+        </div>
         <div style="background:var(--surface2);border-radius:6px;height:22px;width:36px;"></div>
       </div>`).join('');
 
@@ -235,13 +200,13 @@
         const board = data.board || [];
 
         if (!board.length) {
-          table.innerHTML = `<div class="lb-empty"><div class="icon">📭</div><p>No data yet — be the first to ask someone!</p></div>`;
+          table.innerHTML = `<div class="lb-empty"><div class="icon">📭</div><p>${T('lb_empty')}</p></div>`;
           return;
         }
 
-        const label = type === 'received' ? 'received' : 'answered';
-        const rankIcon = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1;
-        const rankClass = (i) => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        const label = type === 'received' ? T('lb_received_lbl') : T('lb_answered_lbl');
+        const rankIcon = i => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1;
+        const rankClass = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
 
         table.innerHTML = board.map((entry, i) => `
         <div class="lb-row">
@@ -255,10 +220,10 @@
             <div class="lb-count">${entry.count}</div>
             <div class="lb-count-label">${label}</div>
           </div>
-          <a href="ask.html?u=${encodeURIComponent(entry.username)}" class="btn btn-primary btn-sm lb-ask-btn">Ask</a>
+          <a href="ask.html?u=${encodeURIComponent(entry.username)}" class="btn btn-primary btn-sm lb-ask-btn">${T('lb_ask_btn')}</a>
         </div>`).join('');
-      } catch (e) {
-        table.innerHTML = `<div class="lb-empty"><div class="icon">⚠️</div><p>Failed to load leaderboard.</p></div>`;
+      } catch {
+        table.innerHTML = `<div class="lb-empty"><div class="icon">⚠️</div><p>Failed to load.</p></div>`;
       }
     }
 
@@ -269,21 +234,26 @@
       loadBoard(type);
     }
 
-    function esc(str) {
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
+    function esc(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-    // Update nav if logged in
     const me = API.getUser();
     if (me) {
       document.getElementById('navActions').innerHTML = `
-      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">🏆 Top</a>
-      <a href="creators.html" class="btn btn-ghost btn-sm">Creators</a>
-      <a href="dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>
+      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);" data-i18n="nav_leaderboard">🏆 Top</a>
+      <a href="creators.html" class="btn btn-ghost btn-sm" data-i18n="nav_creators">Creators</a>
+      <a href="dashboard.html" class="btn btn-ghost btn-sm" data-i18n="nav_dashboard">Dashboard</a>
       <a href="dashboard.html" class="btn btn-primary btn-sm">@${me.username}</a>`;
+      if (typeof I18N !== 'undefined') I18N._applyTranslations();
     }
 
-    loadBoard('received');
+    // Re-render board on language change so labels update
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof I18N !== 'undefined') {
+        const orig = I18N.setLang.bind(I18N);
+        I18N.setLang = (code, save) => { orig(code, save); loadBoard(currentTab); };
+      }
+      loadBoard('received');
+    });
   </script>
 </body>
 

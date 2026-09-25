@@ -5,8 +5,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — AnonQ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <script src="theme-init.js"></script>
   <script src="themes.js" defer></script>
@@ -19,10 +17,11 @@
   <nav class="navbar">
     <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
     <div class="navbar-actions">
-      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">🏆 Top</a>
-      <a href="creators.html" class="btn btn-ghost btn-sm">Creators</a>
-      <a href="find.html" class="btn btn-ghost btn-sm">Find someone</a>
-      <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);"
+        data-i18n="nav_leaderboard">🏆 Top</a>
+      <a href="creators.html" class="btn btn-ghost btn-sm" data-i18n="nav_creators">Creators</a>
+      <a href="find.html" class="btn btn-ghost btn-sm" data-i18n="nav_find">Find someone</a>
+      <button class="btn btn-ghost btn-sm" onclick="logout()" data-i18n="nav_logout">Log out</button>
     </div>
   </nav>
 
@@ -34,39 +33,42 @@
           <h1 id="pageTitle">Loading…</h1>
           <div class="meta" id="pageMeta"></div>
         </div>
-        <a id="viewPublicBtn" href="#" class="btn btn-ghost btn-sm" target="_blank">View public profile ↗</a>
+        <a id="viewPublicBtn" href="#" class="btn btn-ghost btn-sm" target="_blank" data-i18n="dash_view_public">View
+          public profile ↗</a>
       </div>
     </div>
 
     <div class="stats-row" id="statsRow">
       <div class="stat-card">
         <div class="num">—</div>
-        <div class="lbl">Total</div>
+        <div class="lbl" data-i18n="dash_total">Total</div>
       </div>
       <div class="stat-card">
         <div class="num">—</div>
-        <div class="lbl">Unanswered</div>
+        <div class="lbl" data-i18n="dash_unanswered">Unanswered</div>
       </div>
       <div class="stat-card">
         <div class="num">—</div>
-        <div class="lbl">Answered</div>
+        <div class="lbl" data-i18n="dash_answered">Answered</div>
       </div>
     </div>
 
     <div class="share-box">
       <div style="font-size:1.3rem;">🔗</div>
       <div style="flex:1;">
-        <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;font-weight:600;">YOUR SHARE LINK</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;font-weight:600;"
+          data-i18n="dash_share_label">YOUR SHARE LINK</div>
         <div class="link-text" id="shareLink" onclick="copyLink()"></div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="copyLink()">Copy</button>
+      <button class="btn btn-primary btn-sm" onclick="copyLink()" data-i18n="dash_copy">Copy</button>
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('unanswered', this)">Unanswered</button>
-      <button class="tab-btn" onclick="switchTab('answered', this)">Answered</button>
-      <button class="tab-btn" onclick="switchTab('all', this)">All</button>
-      <button class="tab-btn" onclick="switchTab('blocked', this)">🚫 Blocked</button>
+      <button class="tab-btn active" onclick="switchTab('unanswered',this)"
+        data-i18n="dash_unanswered">Unanswered</button>
+      <button class="tab-btn" onclick="switchTab('answered',this)" data-i18n="dash_answered">Answered</button>
+      <button class="tab-btn" onclick="switchTab('all',this)" data-i18n="dash_all">All</button>
+      <button class="tab-btn" onclick="switchTab('blocked',this)" data-i18n="dash_blocked">🚫 Blocked</button>
     </div>
 
     <div id="questionsList">
@@ -85,6 +87,8 @@
     let currentUser = null;
     let allQuestions = [];
 
+    function T(k) { return typeof I18N !== 'undefined' ? I18N.t(k) : k; }
+
     async function init() {
       if (!API.getToken()) { window.location.href = 'login.html'; return; }
       try { currentUser = await API.me(); }
@@ -92,42 +96,36 @@
 
       document.getElementById('pageTitle').textContent = 'Hey, ' + currentUser.display_name + ' 👋';
       document.getElementById('pageMeta').textContent = '@' + currentUser.username;
-
       const link = window.location.origin + '/ask.html?u=' + currentUser.username;
       document.getElementById('shareLink').textContent = link;
       document.getElementById('viewPublicBtn').href = link;
-
       await loadQuestions();
     }
 
     async function loadQuestions() {
-      try {
-        allQuestions = await API.listMyQuestions('all');
-        renderStats(); renderQuestions();
-      } catch (e) { showToast('Failed to load: ' + e.message); }
+      try { allQuestions = await API.listMyQuestions('all'); renderStats(); renderQuestions(); }
+      catch (e) { showToast('Failed to load: ' + e.message); }
     }
 
     function renderStats() {
       const answered = allQuestions.filter(q => q.answer).length;
       const unanswered = allQuestions.filter(q => !q.answer).length;
       document.getElementById('statsRow').innerHTML = `
-      <div class="stat-card"><div class="num">${allQuestions.length}</div><div class="lbl">Total</div></div>
-      <div class="stat-card"><div class="num">${unanswered}</div><div class="lbl">Unanswered</div></div>
-      <div class="stat-card"><div class="num">${answered}</div><div class="lbl">Answered</div></div>`;
+      <div class="stat-card"><div class="num">${allQuestions.length}</div><div class="lbl">${T('dash_total')}</div></div>
+      <div class="stat-card"><div class="num">${unanswered}</div><div class="lbl">${T('dash_unanswered')}</div></div>
+      <div class="stat-card"><div class="num">${answered}</div><div class="lbl">${T('dash_answered')}</div></div>`;
     }
 
     function renderQuestions() {
       if (currentTab === 'blocked') { renderBlocked(); return; }
-
       let filtered = allQuestions;
       if (currentTab === 'unanswered') filtered = allQuestions.filter(q => !q.answer);
       if (currentTab === 'answered') filtered = allQuestions.filter(q => q.answer);
-
       const container = document.getElementById('questionsList');
       if (!filtered.length) {
         container.innerHTML = `<div class="empty-state">
         <div class="icon">${currentTab === 'unanswered' ? '🎉' : '📭'}</div>
-        <p>${currentTab === 'unanswered' ? "No unanswered questions — you're all caught up!" : 'Nothing here yet.'}</p>
+        <p>${currentTab === 'unanswered' ? T('dash_empty_done') : T('dash_empty_none')}</p>
       </div>`;
         return;
       }
@@ -137,91 +135,73 @@
     function buildCard(q) {
       const answerSection = q.answer
         ? `<div class="answer-block">
-           <div class="ans-label">Your answer</div>
+           <div class="ans-label">${T('dash_ans_label')}</div>
            <div>${esc(q.answer)}</div>
            <div style="font-size:.78rem;color:var(--text-muted);margin-top:8px;">${API.formatDate(q.answered_at)}</div>
          </div>`
         : `<div id="form-${q.id}" style="display:none;" class="answer-form">
-           <textarea id="ans-${q.id}" placeholder="Write your answer…"></textarea>
-           <button class="btn btn-primary btn-sm" onclick="submitAnswer('${q.id}')">Post answer</button>
-           <button class="btn btn-ghost btn-sm" onclick="toggleForm('${q.id}',false)" style="margin-left:6px;">Cancel</button>
+           <textarea id="ans-${q.id}" placeholder="…"></textarea>
+           <button class="btn btn-primary btn-sm" onclick="submitAnswer('${q.id}')">${T('dash_post_answer')}</button>
+           <button class="btn btn-ghost btn-sm" onclick="toggleForm('${q.id}',false)" style="margin-left:6px;">${T('dash_cancel')}</button>
          </div>`;
-
       const actionBtn = q.answer
-        ? `<button class="btn btn-ghost btn-sm" onclick="editAnswer('${q.id}')">Edit answer</button>`
-        : `<button class="btn btn-primary btn-sm" onclick="toggleForm('${q.id}',true)">Answer</button>`;
-
+        ? `<button class="btn btn-ghost btn-sm" onclick="editAnswer('${q.id}')">${T('dash_edit_btn')}</button>`
+        : `<button class="btn btn-primary btn-sm" onclick="toggleForm('${q.id}',true)">${T('dash_answer_btn')}</button>`;
       return `<div class="question-card" id="card-${q.id}">
       <div class="q-text">${esc(q.text)}</div>
-      <div class="q-meta">Received ${API.timeAgo(q.created_at)}</div>
+      <div class="q-meta">${T('dash_received')} ${API.timeAgo(q.created_at)}</div>
       ${answerSection}
       <div class="card-actions">
         ${actionBtn}
-        <button class="btn btn-danger btn-sm" onclick="blockSender('${q.id}')">🚫 Block sender</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteQ('${q.id}')">Delete</button>
+        <button class="btn btn-danger btn-sm" onclick="blockSender('${q.id}')">${T('dash_block_btn')}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteQ('${q.id}')">${T('dash_delete_btn')}</button>
       </div>
     </div>`;
     }
 
-    // ── Blocked IPs tab ────────────────────────────────────────
     async function renderBlocked() {
       const container = document.getElementById('questionsList');
       container.innerHTML = `<div class="empty-state"><div class="icon">⏳</div><p>Loading…</p></div>`;
       try {
         const list = await API.listBlocked();
-        if (!list.length) {
-          container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No blocked senders.</p></div>`;
-          return;
-        }
+        if (!list.length) { container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>${T('dash_no_blocked')}</p></div>`; return; }
         container.innerHTML = `
-        <div style="margin-bottom:12px;font-size:.85rem;color:var(--text-muted);">Blocked senders can't send you questions.</div>
+        <div style="margin-bottom:12px;font-size:.85rem;color:var(--text-muted);">${T('dash_blocked_info')}</div>
         ${list.map(b => `
           <div class="question-card" style="display:flex;align-items:center;gap:14px;">
             <div style="flex:1;">
-              <div style="font-weight:600;font-size:.95rem;">🚫 Blocked sender</div>
-              <div style="font-size:.8rem;color:var(--text-muted);margin-top:3px;">Blocked ${API.timeAgo(b.created_at)}</div>
+              <div style="font-weight:600;font-size:.95rem;">🚫 ${T('dash_block_btn')}</div>
+              <div style="font-size:.8rem;color:var(--text-muted);margin-top:3px;">${API.timeAgo(b.created_at)}</div>
             </div>
-            <button class="btn btn-ghost btn-sm" onclick="unblock('${esc(b.ip)}', this)">Unblock</button>
+            <button class="btn btn-ghost btn-sm" onclick="unblock('${esc(b.ip)}',this)">${T('dash_unblock')}</button>
           </div>`).join('')}`;
-      } catch (e) {
-        container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Failed to load.</p></div>`;
-      }
+      } catch { container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Failed to load.</p></div>`; }
     }
 
-    async function blockSender(questionId) {
-      if (!confirm('Block this sender? They won\'t be able to send you questions anymore.')) return;
-      try {
-        await API.blockSender(questionId);
-        showToast('🚫 Sender blocked.');
-      } catch (e) { showToast('Could not block: ' + e.message); }
+    async function blockSender(qid) {
+      if (!confirm(T('dash_block_btn') + '?')) return;
+      try { await API.blockSender(qid); showToast('🚫 ' + T('dash_block_btn')); }
+      catch (e) { showToast(e.message); }
     }
 
     async function unblock(ip, btn) {
-      btn.disabled = true; btn.textContent = 'Unblocking…';
-      try {
-        await API.unblock(ip);
-        showToast('Sender unblocked.');
-        renderBlocked();
-      } catch (e) { showToast('Could not unblock.'); btn.disabled = false; btn.textContent = 'Unblock'; }
+      btn.disabled = true;
+      try { await API.unblock(ip); showToast(T('dash_unblock')); renderBlocked(); }
+      catch { btn.disabled = false; }
     }
 
-    // ── Question actions ───────────────────────────────────────
-    function toggleForm(id, show) {
-      const f = document.getElementById('form-' + id);
-      if (f) f.style.display = show ? 'block' : 'none';
-    }
+    function toggleForm(id, show) { const f = document.getElementById('form-' + id); if (f) f.style.display = show ? 'block' : 'none'; }
 
     async function submitAnswer(id) {
       const ta = document.getElementById('ans-' + id);
       const answer = ta ? ta.value.trim() : '';
-      if (!answer) { showToast('Please write an answer first.'); return; }
+      if (!answer) { showToast(T('dash_post_answer')); return; }
       try {
         const q = await API.answer(id, answer);
         const idx = allQuestions.findIndex(x => x.id === id);
         if (idx !== -1) allQuestions[idx] = q;
-        renderStats(); renderQuestions();
-        showToast('Answer posted! ✓');
-      } catch (e) { showToast('Error: ' + e.message); }
+        renderStats(); renderQuestions(); showToast('✓');
+      } catch (e) { showToast(e.message); }
     }
 
     async function editAnswer(id) {
@@ -229,31 +209,28 @@
         const q = await API.answer(id, null);
         const idx = allQuestions.findIndex(x => x.id === id);
         if (idx !== -1) allQuestions[idx] = q;
-        renderQuestions();
-        setTimeout(() => toggleForm(id, true), 50);
-      } catch (e) { showToast('Error: ' + e.message); }
+        renderQuestions(); setTimeout(() => toggleForm(id, true), 50);
+      } catch (e) { showToast(e.message); }
     }
 
     async function deleteQ(id) {
-      if (!confirm('Delete this question?')) return;
+      if (!confirm(T('dash_delete_btn') + '?')) return;
       try {
         await API.deleteQuestion(id);
         allQuestions = allQuestions.filter(q => q.id !== id);
-        renderStats(); renderQuestions();
-        showToast('Question deleted.');
-      } catch (e) { showToast('Error: ' + e.message); }
+        renderStats(); renderQuestions(); showToast('✓');
+      } catch (e) { showToast(e.message); }
     }
 
     function switchTab(tab, btn) {
       currentTab = tab;
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderQuestions();
+      btn.classList.add('active'); renderQuestions();
     }
 
     function copyLink() {
       navigator.clipboard.writeText(document.getElementById('shareLink').textContent)
-        .then(() => showToast('Link copied! 🔗'));
+        .then(() => showToast('🔗'));
     }
 
     function logout() { API.logout(); window.location.href = 'index.html'; }
@@ -264,9 +241,7 @@
       setTimeout(() => t.classList.remove('show'), 2800);
     }
 
-    function esc(str) {
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-    }
+    function esc(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>'); }
 
     init();
   </script>

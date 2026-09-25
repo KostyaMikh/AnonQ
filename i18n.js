@@ -146,7 +146,7 @@ const LANGS = {
       nav_leaderboard: '🏆 Топ',
       nav_logout: 'Выйти',
 
-      hero_title: 'Получай анонимные вопросы от кого угодно',
+      hero_title: 'Получай <em>анонимные</em> вопросы от кого угодно',
       hero_sub: 'Поделись ссылкой — пусть люди задают вопросы, или найди кого-то по телефону / Telegram.',
       hero_cta1: 'Создать ссылку',
       hero_cta2: 'Найти кого-то',
@@ -266,7 +266,7 @@ const LANGS = {
       nav_leaderboard: '🏆 Top',
       nav_logout: 'Wyloguj',
 
-      hero_title: 'Otrzymuj anonimowe pytania od każdego',
+      hero_title: 'Otrzymuj <em>anonimowe</em> pytania od każdego',
       hero_sub: 'Udostępnij link — niech ludzie zadają pytania, lub znajdź kogoś przez telefon / Telegram.',
       hero_cta1: 'Utwórz link',
       hero_cta2: 'Znajdź kogoś',
@@ -386,7 +386,7 @@ const LANGS = {
       nav_leaderboard: '🏆 Top',
       nav_logout: 'Cerrar sesión',
 
-      hero_title: 'Recibe preguntas anónimas de cualquier persona',
+      hero_title: 'Recibe preguntas <em>anónimas</em> de cualquier persona',
       hero_sub: 'Comparte tu enlace y deja que te pregunten lo que quieran, o busca a alguien por teléfono / Telegram.',
       hero_cta1: 'Crear mi enlace',
       hero_cta2: 'Buscar a alguien',
