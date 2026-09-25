@@ -58,7 +58,7 @@ export default async function handler(req, res) {
         <div class="card">
           <div class="logo">Anon<span>Q</span></div>
           <h2>💬 Someone sent you an anonymous question</h2>
-          <div class="question-box">${question.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
+          <div class="question-box">${question.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
           <p class="muted">They want to stay anonymous — so we can't tell you who it is 🤫<br>Sign up for free to answer and share your own question link.</p>
           <a href="${siteUrl}/register.html" class="btn">Sign up & answer →</a>
         </div>
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'AnonQ <noreply@anonq.app>',
+        from: 'AnonQ <onboarding@resend.dev>',
         to: [to_email],
         subject: '💬 Someone sent you an anonymous question on AnonQ',
         html,
