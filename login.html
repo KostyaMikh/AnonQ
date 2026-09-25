@@ -3,39 +3,45 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
   <title>Log In — AnonQ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="style.css" />
   <script src="theme-init.js"></script>
   <script src="themes.js" defer></script>
+  <script src="i18n.js" defer></script>
+  <script src="navbar.js" defer></script>
+  <script src="tg.js" defer></script>
 </head>
 
 <body>
 
   <nav class="navbar">
     <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
+    <div class="navbar-actions"></div>
   </nav>
 
   <div class="auth-wrap">
     <div class="card auth-card">
-      <h2>Welcome back</h2>
-      <p class="sub">Log in to see your anonymous questions.</p>
+      <h2 data-i18n="login_title">Welcome back</h2>
+      <p class="sub" data-i18n="login_sub">Log in to see your anonymous questions.</p>
 
       <div class="form-group">
-        <label>Username</label>
+        <label data-i18n="reg_username">Username</label>
         <input type="text" id="username" placeholder="yourusername" autocomplete="off" />
       </div>
       <div class="form-group">
-        <label>Password</label>
+        <label data-i18n="reg_password">Password</label>
         <input type="password" id="password" placeholder="••••••••" />
       </div>
 
       <span class="error-msg" id="err-global" style="margin-bottom:14px;"></span>
-
-      <button class="btn btn-primary" style="width:100%;" id="submitBtn" onclick="login()">Log in</button>
-      <p class="auth-switch">No account yet? <a href="register.html">Sign up</a></p>
+      <button class="btn btn-primary" style="width:100%;" id="submitBtn" onclick="login()" data-i18n="login_btn">Log
+        in</button>
+      <p class="auth-switch">
+        <span data-i18n="login_switch">No account yet?</span>
+        <a href="register.html" data-i18n="login_reg_link">Sign up</a>
+      </p>
     </div>
   </div>
 
@@ -47,20 +53,17 @@
     async function login() {
       const err = document.getElementById('err-global');
       err.classList.remove('show'); err.textContent = '';
-
       const username = document.getElementById('username').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
       if (!username || !password) { err.textContent = 'Please fill in all fields.'; err.classList.add('show'); return; }
-
       const btn = document.getElementById('submitBtn');
-      btn.disabled = true; btn.textContent = 'Logging in…';
-
+      btn.disabled = true;
       try {
         await API.login(username, password);
         window.location.href = 'dashboard.html';
       } catch (e) {
         err.textContent = e.message; err.classList.add('show');
-        btn.disabled = false; btn.textContent = 'Log in';
+        btn.disabled = false;
       }
     }
 

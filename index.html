@@ -3,13 +3,15 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
   <title>AnonQ — Ask Anonymously</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="style.css" />
   <script src="theme-init.js"></script>
   <script src="themes.js" defer></script>
+  <script src="i18n.js" defer></script>
+  <script src="navbar.js" defer></script>
+  <script src="tg.js" defer></script>
 </head>
 
 <body>
@@ -17,21 +19,23 @@
   <nav class="navbar">
     <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
     <div class="navbar-actions" id="navActions">
-      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">🏆 Top</a>
-      <a href="creators.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">Creators</a>
-      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
-      <a href="register.html" class="btn btn-primary btn-sm">Sign up</a>
+      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);"
+        data-i18n="nav_leaderboard">🏆 Top</a>
+      <a href="creators.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);"
+        data-i18n="nav_creators">Creators</a>
+      <a href="login.html" class="btn btn-ghost btn-sm" data-i18n="nav_login">Log in</a>
+      <a href="register.html" class="btn btn-primary btn-sm" data-i18n="nav_signup">Sign up</a>
     </div>
   </nav>
 
   <section class="hero">
     <div class="container">
-      <h1>Get <em>anonymous</em> questions<br>from anyone</h1>
-      <p>Share your link, let people ask you anything — or find someone by phone / Telegram and send them a secret
-        question.</p>
+      <h1 data-i18n-html="hero_title">Get <em>anonymous</em> questions from anyone</h1>
+      <p data-i18n="hero_sub">Share your link, let people ask you anything — or find someone by phone / Telegram and
+        send them a secret question.</p>
       <div class="hero-actions">
-        <a href="register.html" class="btn btn-primary">Create your link</a>
-        <a href="find.html" class="btn btn-ghost">Find someone</a>
+        <a href="register.html" class="btn btn-primary" data-i18n="hero_cta1">Create your link</a>
+        <a href="find.html" class="btn btn-ghost" data-i18n="hero_cta2">Find someone</a>
       </div>
     </div>
   </section>
@@ -42,21 +46,21 @@
         style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:20px; text-align:center;">
         <div class="card">
           <div style="font-size:2.2rem;margin-bottom:12px;">🔗</div>
-          <h3 style="margin-bottom:8px;">Share your link</h3>
-          <p style="color:var(--text-muted);font-size:.9rem;">Post it on Instagram, Twitter, or any bio — your followers
-            can ask you anything.</p>
+          <h3 style="margin-bottom:8px;" data-i18n="feature1_title">Share your link</h3>
+          <p style="color:var(--text-muted);font-size:.9rem;" data-i18n="feature1_desc">Post it on Instagram, Twitter,
+            or any bio — your followers can ask you anything.</p>
         </div>
         <div class="card">
           <div style="font-size:2.2rem;margin-bottom:12px;">📩</div>
-          <h3 style="margin-bottom:8px;">Receive questions</h3>
-          <p style="color:var(--text-muted);font-size:.9rem;">Questions arrive completely anonymously — no sender info,
-            ever.</p>
+          <h3 style="margin-bottom:8px;" data-i18n="feature2_title">Receive questions</h3>
+          <p style="color:var(--text-muted);font-size:.9rem;" data-i18n="feature2_desc">Questions arrive completely
+            anonymously — no sender info, ever.</p>
         </div>
         <div class="card">
           <div style="font-size:2.2rem;margin-bottom:12px;">💬</div>
-          <h3 style="margin-bottom:8px;">Answer publicly</h3>
-          <p style="color:var(--text-muted);font-size:.9rem;">Reply to questions and your answers show up on your public
-            profile for everyone to read.</p>
+          <h3 style="margin-bottom:8px;" data-i18n="feature3_title">Answer publicly</h3>
+          <p style="color:var(--text-muted);font-size:.9rem;" data-i18n="feature3_desc">Reply to questions and your
+            answers show up on your public profile for everyone to read.</p>
         </div>
       </div>
     </div>
@@ -68,9 +72,12 @@
     const me = API.getUser();
     if (me) {
       document.getElementById('navActions').innerHTML = `
-      <a href="creators.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">Creators</a>
-      <a href="dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>
+      <a href="leaderboard.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);" data-i18n="nav_leaderboard">🏆 Top</a>
+      <a href="creators.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);" data-i18n="nav_creators">Creators</a>
+      <a href="dashboard.html" class="btn btn-ghost btn-sm" data-i18n="nav_dashboard">Dashboard</a>
       <a href="dashboard.html" class="btn btn-primary btn-sm">@${me.username}</a>`;
+      // Re-apply translations after dynamic nav update
+      if (typeof I18N !== 'undefined') I18N._applyTranslations();
     }
   </script>
 </body>
