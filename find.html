@@ -139,14 +139,7 @@
       btn.disabled = true; btn.textContent = 'Sending…';
 
       try {
-        const res = await fetch('/api/email/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to_email: toEmail, question }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to send.');
-
+        await API.sendEmail(toEmail, question);
         okEl.textContent = '🎉 Anonymous question sent to ' + toEmail + '!';
         okEl.classList.add('show');
         document.getElementById('inp-email').value = '';

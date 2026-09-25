@@ -166,19 +166,13 @@
       const container = document.getElementById('questionsList');
       container.innerHTML = `<div class="empty-state"><div class="icon">⏳</div><p>Loading…</p></div>`;
       try {
-        const res = await fetch('/api/block/list', { headers: { Authorization: 'Bearer ' + API.getToken() } });
-        const data = await res.json();
-        const list = data.blocked || [];
-
+        const list = await API.listBlocked();
         if (!list.length) {
           container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No blocked senders.</p></div>`;
           return;
         }
-
         container.innerHTML = `
-        <div style="margin-bottom:12px;font-size:.85rem;color:var(--text-muted);">
-          Blocked senders can't send you questions. Their IP is blocked.
-        </div>
+        <div style="margin-bottom:12px;font-size:.85rem;color:var(--text-muted);">Blocked senders can't send you questions.</div>
         ${list.map(b => `
           <div class="question-card" style="display:flex;align-items:center;gap:14px;">
             <div style="flex:1;">
@@ -195,13 +189,7 @@
     async function blockSender(questionId) {
       if (!confirm('Block this sender? They won\'t be able to send you questions anymore.')) return;
       try {
-        const res = await fetch('/api/block/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + API.getToken() },
-          body: JSON.stringify({ question_id: questionId }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        await API.blockSender(questionId);
         showToast('🚫 Sender blocked.');
       } catch (e) { showToast('Could not block: ' + e.message); }
     }
@@ -209,12 +197,7 @@
     async function unblock(ip, btn) {
       btn.disabled = true; btn.textContent = 'Unblocking…';
       try {
-        const res = await fetch('/api/block/list', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + API.getToken() },
-          body: JSON.stringify({ ip }),
-        });
-        if (!res.ok) throw new Error('Failed');
+        await API.unblock(ip);
         showToast('Sender unblocked.');
         renderBlocked();
       } catch (e) { showToast('Could not unblock.'); btn.disabled = false; btn.textContent = 'Unblock'; }

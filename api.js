@@ -1,18 +1,14 @@
 // ============================================================
-//  AnonQ — Frontend API client
-//  Replaces data.js localStorage calls with real API calls
+//  AnonQ — Frontend API client (consolidated endpoints)
 // ============================================================
 
 const API = {
+  getToken() { return localStorage.getItem('aq_token'); },
+  setToken(t) { localStorage.setItem('aq_token', t); },
+  clearToken() { localStorage.removeItem('aq_token'); localStorage.removeItem('aq_user'); },
+  getUser() { try { return JSON.parse(localStorage.getItem('aq_user')); } catch { return null; } },
+  setUser(u) { localStorage.setItem('aq_user', JSON.stringify(u)); },
 
-  // ── Auth token (stored in localStorage) ───────────────────
-  getToken()        { return localStorage.getItem('aq_token'); },
-  setToken(t)       { localStorage.setItem('aq_token', t); },
-  clearToken()      { localStorage.removeItem('aq_token'); localStorage.removeItem('aq_user'); },
-  getUser()         { try { return JSON.parse(localStorage.getItem('aq_user')); } catch { return null; } },
-  setUser(u)        { localStorage.setItem('aq_user', JSON.stringify(u)); },
-
-  // ── Base fetch ─────────────────────────────────────────────
   async _fetch(path, options = {}) {
     const token = this.getToken();
     const res = await fetch(path, {
@@ -31,76 +27,84 @@ const API = {
 
   // ── Auth ───────────────────────────────────────────────────
   async register({ username, display_name, password, phone, telegram }) {
-    const data = await this._fetch('/api/auth/register', {
-      method: 'POST',
-      body: { username, display_name, password, phone, telegram },
-    });
-    this.setToken(data.token);
-    this.setUser(data.user);
+    const data = await this._fetch('/api/auth?action=register', { method: 'POST', body: { username, display_name, password, phone, telegram } });
+    this.setToken(data.token); this.setUser(data.user);
     return data.user;
   },
 
   async login(username, password) {
-    const data = await this._fetch('/api/auth/login', {
-      method: 'POST',
-      body: { username, password },
-    });
-    this.setToken(data.token);
-    this.setUser(data.user);
+    const data = await this._fetch('/api/auth?action=login', { method: 'POST', body: { username, password } });
+    this.setToken(data.token); this.setUser(data.user);
     return data.user;
   },
 
   logout() { this.clearToken(); },
 
   async me() {
-    const data = await this._fetch('/api/auth/me');
+    const data = await this._fetch('/api/auth?action=me');
     this.setUser(data.user);
     return data.user;
   },
 
   // ── Users ──────────────────────────────────────────────────
   async findUser(by, value) {
-    const data = await this._fetch(`/api/users/find?by=${encodeURIComponent(by)}&value=${encodeURIComponent(value)}`);
+    const data = await this._fetch(`/api/users?action=find&by=${encodeURIComponent(by)}&value=${encodeURIComponent(value)}`);
     return data.user;
   },
 
   async getProfile(username) {
-    const data = await this._fetch(`/api/users/profile?username=${encodeURIComponent(username)}`);
+    const data = await this._fetch(`/api/users?action=profile&username=${encodeURIComponent(username)}`);
     return data.user;
   },
 
   // ── Questions ──────────────────────────────────────────────
   async ask(to_username, text) {
-    const data = await this._fetch('/api/questions/ask', {
-      method: 'POST',
-      body: { to_username, text },
-    });
+    const data = await this._fetch('/api/questions?action=ask', { method: 'POST', body: { to_username, text } });
     return data.question;
   },
 
   async listMyQuestions(filter = 'all') {
-    const data = await this._fetch(`/api/questions/list?filter=${filter}`);
+    const data = await this._fetch(`/api/questions?action=list&filter=${filter}`);
     return data.questions;
   },
 
   async listPublicQuestions(username) {
-    const data = await this._fetch(`/api/questions/list?username=${encodeURIComponent(username)}&public=1`);
+    const data = await this._fetch(`/api/questions?action=list&username=${encodeURIComponent(username)}&public=1`);
     return data.questions;
   },
 
   async answer(id, answer) {
-    const data = await this._fetch('/api/questions/answer', {
-      method: 'PATCH',
-      body: { id, answer },
-    });
+    const data = await this._fetch('/api/questions?action=answer', { method: 'PATCH', body: { id, answer } });
     return data.question;
   },
 
   async deleteQuestion(id) {
-    await this._fetch('/api/questions/delete', {
-      method: 'DELETE',
-      body: { id },
-    });
+    await this._fetch('/api/questions?action=delete', { method: 'DELETE', body: { id } });
+  },
+
+  // ── Leaderboard ────────────────────────────────────────────
+  async leaderboard(type = 'received', limit = 20) {
+    const data = await this._fetch(`/api/misc?action=leaderboard&type=${type}&limit=${limit}`);
+    return data.board;
+  },
+
+  // ── Block ──────────────────────────────────────────────────
+  async blockSender(question_id) {
+    await this._fetch('/api/misc?action=block_add', { method: 'POST', body: { question_id } });
+  },
+
+  async listBlocked() {
+    const data = await this._fetch('/api/misc?action=block_list');
+    return data.blocked;
+  },
+
+  async unblock(ip) {
+    await this._fetch('/api/misc?action=block_remove', { method: 'DELETE', body: { ip } });
+  },
+
+  // ── Email ──────────────────────────────────────────────────
+  async sendEmail(to_email, question) {
+    await this._fetch('/api/misc?action=email_send', { method: 'POST', body: { to_email, question } });
   },
 
   // ── Helpers ────────────────────────────────────────────────
