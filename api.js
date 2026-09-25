@@ -74,12 +74,12 @@ const API = {
   },
 
   async answer(id, answer) {
-    const data = await this._fetch('/api/questions?action=answer', { method: 'PATCH', body: { id, answer } });
+    const data = await this._fetch('/api/questions?action=answer', { method: 'POST', body: { id, answer } });
     return data.question;
   },
 
   async deleteQuestion(id) {
-    await this._fetch('/api/questions?action=delete', { method: 'DELETE', body: { id } });
+    await this._fetch('/api/questions?action=delete', { method: 'POST', body: { id } });
   },
 
   // ── Leaderboard ────────────────────────────────────────────
@@ -99,7 +99,7 @@ const API = {
   },
 
   async unblock(ip) {
-    await this._fetch('/api/misc?action=block_remove', { method: 'DELETE', body: { ip } });
+    await this._fetch('/api/misc?action=block_remove', { method: 'POST', body: { ip } });
   },
 
   // ── Email ──────────────────────────────────────────────────

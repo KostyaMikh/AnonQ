@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       .select('id, to_username, text, answer, answered_at, created_at')
       .eq('to_username', payload.username)
       .order('created_at', { ascending: false });
-    if (filter === 'answered')   query = query.not('answer', 'is', null);
+    if (filter === 'answered') query = query.not('answer', 'is', null);
     if (filter === 'unanswered') query = query.is('answer', null);
     const { data: questions, error } = await query;
     if (error) return res.status(500).json({ error: 'Could not fetch questions.' });
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
   }
 
   // ── PATCH ?action=answer ──────────────────────────────────
-  if (req.method === 'PATCH' && action === 'answer') {
+  if ((req.method === 'PATCH' || req.method === 'POST') && action === 'answer') {
     const payload = requireAuth(req, res);
     if (!payload) return;
     const { id, answer } = req.body || {};
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
   }
 
   // ── DELETE ?action=delete ─────────────────────────────────
-  if (req.method === 'DELETE' && action === 'delete') {
+  if ((req.method === 'DELETE' || req.method === 'POST') && action === 'delete') {
     const payload = requireAuth(req, res);
     if (!payload) return;
     const { id } = req.body || {};

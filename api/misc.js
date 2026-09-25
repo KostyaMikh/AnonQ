@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   // ── GET ?action=leaderboard&type=received|answered ────────
   if (req.method === 'GET' && action === 'leaderboard') {
-    const type  = req.query.type  || 'received';
+    const type = req.query.type || 'received';
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
 
     const onlyAnswered = type === 'answered';
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
   }
 
   // ── DELETE ?action=block_remove ───────────────────────────
-  if (req.method === 'DELETE' && action === 'block_remove') {
+  if ((req.method === 'DELETE' || req.method === 'POST') && action === 'block_remove') {
     const payload = requireAuth(req, res);
     if (!payload) return;
     const { ip } = req.body || {};
@@ -89,7 +89,7 @@ export default async function handler(req, res) {
     if (!apiKey) return res.status(500).json({ error: 'Email service not configured.' });
 
     const siteUrl = process.env.SITE_URL || 'https://sasha-bald.vercel.app';
-    const safeQ = question.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    const safeQ = question.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
       <style>body{font-family:Inter,system-ui,sans-serif;background:#0f0f13;color:#e8e8f0;margin:0;padding:0}
