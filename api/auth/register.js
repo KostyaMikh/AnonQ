@@ -1,6 +1,6 @@
 // POST /api/auth/register
 import bcrypt from 'bcryptjs';
-import { getSupabase, signToken, cors, handleOptions } from '../_lib.js';
+import { getSupabase, signToken, cors, handleOptions } from '../lib.js';
 
 export default async function handler(req, res) {
   cors(res);

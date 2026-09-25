@@ -2,6 +2,7 @@
   "name": "anonq",
   "version": "1.0.0",
   "description": "Anonymous Q&A web app",
+  "type": "module",
   "scripts": {
     "dev": "vercel dev"
   },

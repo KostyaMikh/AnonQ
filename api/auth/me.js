@@ -1,5 +1,5 @@
 // GET /api/auth/me  — returns current user from JWT
-import { getSupabase, requireAuth, cors, handleOptions } from '../_lib.js';
+import { getSupabase, requireAuth, cors, handleOptions } from '../lib.js';
 
 export default async function handler(req, res) {
   cors(res);

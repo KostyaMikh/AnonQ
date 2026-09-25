@@ -1,6 +1,6 @@
 // GET /api/users/profile?username=xxx
 // Public — returns safe user info (no password_hash)
-import { getSupabase, cors, handleOptions } from '../_lib.js';
+import { getSupabase, cors, handleOptions } from '../lib.js';
 
 export default async function handler(req, res) {
   cors(res);
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     .maybeSingle();
 
   if (error) return res.status(500).json({ error: 'Lookup failed.' });
-  if (!user)  return res.status(404).json({ error: 'User not found.' });
+  if (!user) return res.status(404).json({ error: 'User not found.' });
 
   // Get answered question count for the profile
   const { count } = await supabase

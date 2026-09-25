@@ -1,7 +1,7 @@
 // GET /api/questions/list?username=xxx&filter=all|answered|unanswered
 // Private (own questions) — requires auth
 // Public answered questions for a profile page — no auth, pass ?username=xxx&public=1
-import { getSupabase, requireAuth, cors, handleOptions } from '../_lib.js';
+import { getSupabase, requireAuth, cors, handleOptions } from '../lib.js';
 
 export default async function handler(req, res) {
   cors(res);
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     .eq('to_username', payload.username)
     .order('created_at', { ascending: false });
 
-  if (filter === 'answered')   query = query.not('answer', 'is', null);
+  if (filter === 'answered') query = query.not('answer', 'is', null);
   if (filter === 'unanswered') query = query.is('answer', null);
 
   const { data: questions, error } = await query;

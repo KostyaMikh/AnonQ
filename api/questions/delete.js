@@ -1,7 +1,7 @@
 // DELETE /api/questions/delete
 // Body: { id }
 // Requires auth — only the question recipient can delete
-import { getSupabase, requireAuth, cors, handleOptions } from '../_lib.js';
+import { getSupabase, requireAuth, cors, handleOptions } from '../lib.js';
 
 export default async function handler(req, res) {
   cors(res);

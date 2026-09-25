@@ -1,7 +1,7 @@
 // PATCH /api/questions/answer
 // Body: { id, answer }  — answer can be null to clear it
 // Requires auth — only the question recipient can answer
-import { getSupabase, requireAuth, cors, handleOptions } from '../_lib.js';
+import { getSupabase, requireAuth, cors, handleOptions } from '../lib.js';
 
 export default async function handler(req, res) {
   cors(res);

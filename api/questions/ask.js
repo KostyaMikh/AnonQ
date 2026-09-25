@@ -1,6 +1,6 @@
 // POST /api/questions/ask
 // Public — no auth required (anonymous sender)
-import { getSupabase, cors, handleOptions } from '../_lib.js';
+import { getSupabase, cors, handleOptions } from '../lib.js';
 
 export default async function handler(req, res) {
   cors(res);
