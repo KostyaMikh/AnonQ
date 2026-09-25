@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="style.css" />
   <script src="theme-init.js"></script>
   <script src="themes.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 
 <body>
@@ -18,6 +17,7 @@
   <nav class="navbar">
     <a class="navbar-brand" href="index.html">Anon<span>Q</span></a>
     <div class="navbar-actions" id="navActions">
+      <a href="creators.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">Creators</a>
       <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
       <a href="register.html" class="btn btn-primary btn-sm">Sign up</a>
     </div>
@@ -28,8 +28,7 @@
 
       <div style="text-align:center;margin-bottom:36px;">
         <h1 style="font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:10px;">Find someone to ask</h1>
-        <p style="color:var(--text-muted);">Look up a registered user — or send an anonymous question directly to any
-          email address.</p>
+        <p style="color:var(--text-muted);">Look up a registered user — or send an anonymous question to any email.</p>
       </div>
 
       <div class="card" style="max-width:540px;margin:0 auto;">
@@ -71,12 +70,12 @@
           <button class="btn btn-primary" style="width:100%;" onclick="search('telegram')">Find &amp; Ask</button>
         </div>
 
-        <!-- Email (non-registered) -->
+        <!-- ✉️ By Email — uses /api/email/send (Resend, no third-party JS) -->
         <div id="mode-email" style="display:none;">
           <div
             style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px;font-size:.86rem;color:var(--text-muted);line-height:1.6;">
             <strong style="color:var(--text);">📨 Send to anyone, even without an account</strong><br>
-            They'll get an email saying someone sent them an anonymous question.
+            They'll get an email saying someone sent them an anonymous question, with a link to sign up and read it.
           </div>
           <div class="form-group">
             <label>Their Email Address</label>
@@ -89,31 +88,11 @@
           </div>
           <span class="error-msg" id="err-email" style="margin-bottom:12px;"></span>
           <span class="success-msg" id="ok-email" style="margin-bottom:12px;"></span>
-          <button class="btn btn-primary" style="width:100%;" id="sendEmailBtn" onclick="sendToEmail()">Send anonymous
-            question ✉️</button>
-
-          <div id="emailjs-notice"
-            style="margin-top:18px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-size:.83rem;color:var(--text-muted);line-height:1.7;">
-            <strong style="color:var(--accent2);">⚙️ One-time setup required</strong><br>
-            Uses <a href="https://emailjs.com" target="_blank" style="color:var(--accent2);">EmailJS</a> (free, no
-            server).<br><br>
-            <strong style="color:var(--text);">Steps:</strong><br>
-            1. Sign up at <a href="https://emailjs.com" target="_blank"
-              style="color:var(--accent2);">emailjs.com</a><br>
-            2. Add an Email Service (Gmail, Outlook…)<br>
-            3. Create a Template with <code
-              style="background:var(--surface);padding:1px 5px;border-radius:4px;">{{question}}</code> and <code
-              style="background:var(--surface);padding:1px 5px;border-radius:4px;">{{to_email}}</code><br>
-            4. Paste your credentials below:<br><br>
-            <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
-              <input type="text" id="cfg-pubkey" placeholder="Public Key" style="font-size:.82rem;" />
-              <input type="text" id="cfg-serviceid" placeholder="Service ID" style="font-size:.82rem;" />
-              <input type="text" id="cfg-templateid" placeholder="Template ID" style="font-size:.82rem;" />
-              <button class="btn btn-primary btn-sm" onclick="saveEmailJSConfig()" style="align-self:flex-start;">Save
-                &amp; activate</button>
-              <span class="success-msg" id="cfg-saved">✓ Saved!</span>
-            </div>
-          </div>
+          <button class="btn btn-primary" style="width:100%;" id="sendEmailBtn" onclick="sendToEmail()">
+            Send anonymous question ✉️
+          </button>
+          <p style="font-size:.78rem;color:var(--text-muted);text-align:center;margin-top:10px;">Sent securely — no
+            account needed</p>
         </div>
 
         <!-- Lookup result -->
@@ -127,70 +106,6 @@
   <div id="toast"></div>
   <script src="api.js"></script>
   <script>
-    // ── EmailJS ────────────────────────────────────────────────
-    const EJSKEY = 'aq_emailjs';
-    function getEJSConfig() { try { return JSON.parse(localStorage.getItem(EJSKEY)) || {}; } catch { return {}; } }
-
-    function saveEmailJSConfig() {
-      const pubkey = document.getElementById('cfg-pubkey').value.trim();
-      const serviceId = document.getElementById('cfg-serviceid').value.trim();
-      const templateId = document.getElementById('cfg-templateid').value.trim();
-      if (!pubkey || !serviceId || !templateId) { showToast('Fill in all three fields.'); return; }
-      localStorage.setItem(EJSKEY, JSON.stringify({ pubkey, serviceId, templateId }));
-      emailjs.init(pubkey);
-      document.getElementById('cfg-saved').classList.add('show');
-      setTimeout(() => document.getElementById('cfg-saved').classList.remove('show'), 3000);
-    }
-
-    (function () {
-      const cfg = getEJSConfig();
-      if (cfg.pubkey) { emailjs.init(cfg.pubkey); document.getElementById('emailjs-notice').style.display = 'none'; }
-      if (cfg.pubkey) document.getElementById('cfg-pubkey').value = cfg.pubkey;
-      if (cfg.serviceId) document.getElementById('cfg-serviceid').value = cfg.serviceId;
-      if (cfg.templateId) document.getElementById('cfg-templateid').value = cfg.templateId;
-    })();
-
-    async function sendToEmail() {
-      const errEl = document.getElementById('err-email');
-      const okEl = document.getElementById('ok-email');
-      errEl.classList.remove('show'); okEl.classList.remove('show');
-
-      const toEmail = document.getElementById('inp-email').value.trim();
-      const question = document.getElementById('inp-email-question').value.trim();
-
-      if (!toEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
-        errEl.textContent = 'Please enter a valid email address.'; errEl.classList.add('show'); return;
-      }
-      if (!question) { errEl.textContent = 'Please write a question.'; errEl.classList.add('show'); return; }
-
-      const cfg = getEJSConfig();
-      if (!cfg.pubkey) {
-        errEl.textContent = 'EmailJS is not configured yet — fill in the setup fields below.';
-        errEl.classList.add('show');
-        document.getElementById('emailjs-notice').style.display = 'block'; return;
-      }
-
-      const btn = document.getElementById('sendEmailBtn');
-      btn.disabled = true; btn.textContent = 'Sending…';
-
-      try {
-        await emailjs.send(cfg.serviceId, cfg.templateId, {
-          to_email: toEmail, question,
-          site_url: window.location.origin + '/register.html',
-        });
-        okEl.textContent = '🎉 Anonymous question sent to ' + toEmail + '!';
-        okEl.classList.add('show');
-        document.getElementById('inp-email').value = '';
-        document.getElementById('inp-email-question').value = '';
-      } catch (e) {
-        errEl.textContent = 'Failed: ' + (e?.text || e?.message || 'Check your EmailJS config.');
-        errEl.classList.add('show');
-      } finally {
-        btn.disabled = false; btn.textContent = 'Send anonymous question ✉️';
-      }
-    }
-
-    // ── User lookup ────────────────────────────────────────────
     let currentMode = 'username';
 
     function switchMode(mode, btn) {
@@ -204,6 +119,46 @@
       clearErr();
     }
 
+    // ── Send by email via /api/email/send ──────────────────────
+    async function sendToEmail() {
+      const errEl = document.getElementById('err-email');
+      const okEl = document.getElementById('ok-email');
+      errEl.classList.remove('show'); okEl.classList.remove('show');
+
+      const toEmail = document.getElementById('inp-email').value.trim();
+      const question = document.getElementById('inp-email-question').value.trim();
+
+      if (!toEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
+        errEl.textContent = 'Please enter a valid email address.'; errEl.classList.add('show'); return;
+      }
+      if (!question) {
+        errEl.textContent = 'Please write a question.'; errEl.classList.add('show'); return;
+      }
+
+      const btn = document.getElementById('sendEmailBtn');
+      btn.disabled = true; btn.textContent = 'Sending…';
+
+      try {
+        const res = await fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to_email: toEmail, question }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to send.');
+
+        okEl.textContent = '🎉 Anonymous question sent to ' + toEmail + '!';
+        okEl.classList.add('show');
+        document.getElementById('inp-email').value = '';
+        document.getElementById('inp-email-question').value = '';
+      } catch (e) {
+        errEl.textContent = e.message; errEl.classList.add('show');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Send anonymous question ✉️';
+      }
+    }
+
+    // ── User lookup ────────────────────────────────────────────
     async function search(mode) {
       clearErr();
       document.getElementById('searchResult').innerHTML = '';
@@ -269,7 +224,9 @@
 
     const me = API.getUser();
     if (me) {
-      document.getElementById('navActions').innerHTML = `<a href="dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>`;
+      document.getElementById('navActions').innerHTML = `
+      <a href="creators.html" class="btn btn-ghost btn-sm" style="color:var(--accent2);">Creators</a>
+      <a href="dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>`;
     }
   </script>
 </body>
