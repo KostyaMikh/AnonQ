@@ -6,10 +6,9 @@ import jwt from 'jsonwebtoken';
 
 // ── Supabase client (service role — server-side only) ────────
 export function getSupabase() {
-  return createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  const url = (process.env.SUPABASE_URL || '').trim().replace(/\/$/, '');
+  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+  return createClient(url, key);
 }
 
 // ── JWT helpers ──────────────────────────────────────────────

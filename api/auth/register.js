@@ -50,7 +50,7 @@ export default async function handler(req, res) {
 
   if (error) {
     console.error('register error', error);
-    return res.status(500).json({ error: 'Could not create account. Please try again.' });
+    return res.status(500).json({ error: error.message || JSON.stringify(error) });
   }
 
   const token = signToken({ id: user.id, username: user.username, display_name: user.display_name });

@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Anonymous Q&A web app",
   "type": "module",
-  "scripts": {
-    "dev": "vercel dev"
-  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "bcryptjs": "^2.4.3",
