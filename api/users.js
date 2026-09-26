@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     const { data: user, error } = await supabase.from('users').select('id, username, display_name, created_at')
       .eq('username', username.toLowerCase().trim()).maybeSingle();
     if (error) return res.status(500).json({ error: 'Lookup failed.' });
-    if (!user)  return res.status(404).json({ error: 'User not found.' });
+    if (!user) return res.status(404).json({ error: 'User not found.' });
     const { count } = await supabase.from('questions').select('id', { count: 'exact', head: true })
       .eq('to_username', user.username).not('answer', 'is', null);
     return res.status(200).json({ user: { ...user, answered_count: count ?? 0 } });
@@ -35,16 +35,24 @@ export default async function handler(req, res) {
     if (by === 'username') {
       query = supabase.from('users').select(SAFE).eq('username', value.toLowerCase().trim()).maybeSingle();
     } else if (by === 'phone') {
+      // Try exact match, also try with/without spaces
       query = supabase.from('users').select(SAFE).eq('phone', value.trim()).maybeSingle();
     } else if (by === 'telegram') {
-      query = supabase.from('users').select(SAFE).ilike('telegram', value.trim().replace(/^@/, '')).maybeSingle();
+      // Strip leading @ from input and match against stored value with or without @
+      const clean = value.trim().replace(/^@/, '').toLowerCase();
+      // Try matching @clean and clean both
+      const { data: u1 } = await supabase.from('users').select(SAFE).ilike('telegram', clean).maybeSingle();
+      const { data: u2 } = await supabase.from('users').select(SAFE).ilike('telegram', '@' + clean).maybeSingle();
+      const user = u1 || u2;
+      if (!user) return res.status(404).json({ error: 'No user found.' });
+      return res.status(200).json({ user });
     } else {
       return res.status(400).json({ error: 'Invalid "by". Use: username, phone, or telegram.' });
     }
 
     const { data: user, error } = await query;
     if (error) return res.status(500).json({ error: 'Lookup failed.' });
-    if (!user)  return res.status(404).json({ error: 'No user found.' });
+    if (!user) return res.status(404).json({ error: 'No user found.' });
     return res.status(200).json({ user });
   }
 
